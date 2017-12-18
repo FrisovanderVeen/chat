@@ -11,7 +11,7 @@ import (
 )
 
 //Run runs the client
-func Run(addr string, path string) {
+func Run(addr string, path string, sendRec bool) {
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
@@ -27,6 +27,12 @@ func Run(addr string, path string) {
 
 	done := make(chan struct{})
 
+	if sendRec {
+		log.Println("Send and Recieve")
+	} else {
+		log.Println("Recieve only")
+	}
+
 	go func() {
 		defer conn.Close()
 		defer close(done)
@@ -40,30 +46,50 @@ func Run(addr string, path string) {
 		}
 	}()
 
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	if sendRec {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
 
-	for {
-		select {
-		case t := <-ticker.C:
-			err := conn.WriteMessage(websocket.TextMessage, []byte(t.String()))
-			if err != nil {
-				log.Printf("Could not write: %v", err)
-				return
-			}
-		case <-interrupt:
-			log.Println("interrupt")
-			err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			if err != nil {
-				log.Printf("Could not close: %v", err)
-				return
-			}
+		for {
 			select {
-			case <-done:
-			case <-time.After(time.Second):
+			case t := <-ticker.C:
+				err := conn.WriteMessage(websocket.TextMessage, []byte(t.String()))
+				if err != nil {
+					log.Printf("Could not write: %v", err)
+					return
+				}
+			case <-interrupt:
+				log.Println("interrupt")
+				err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				if err != nil {
+					log.Printf("Could not close: %v", err)
+					return
+				}
+				select {
+				case <-done:
+				case <-time.After(time.Second):
+				}
+				conn.Close()
+				return
 			}
-			conn.Close()
-			return
+		}
+	} else {
+		for {
+			select {
+			case <-interrupt:
+				log.Println("interrupt")
+				err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				if err != nil {
+					log.Printf("Could not close: %v", err)
+					return
+				}
+				select {
+				case <-done:
+				case <-time.After(time.Second):
+				}
+				conn.Close()
+				return
+			}
 		}
 	}
 }

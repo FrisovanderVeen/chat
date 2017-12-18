@@ -28,6 +28,10 @@ var globalFlags = []cli.Flag{
 		Value: "localhost:8080",
 		Usage: "http service address",
 	},
+	cli.BoolFlag{
+		Name:  "echo",
+		Usage: "If the server will echo the message only to the client (when true) or to every client (when false)",
+	},
 }
 
 type Cmd struct {
@@ -49,11 +53,10 @@ func New() *Cmd {
 
 	app.Action = func(c *cli.Context) error {
 		addr := c.String("address")
+		echo := c.Bool("echo")
 
-		err := server.Run(addr)
-		if err != nil {
-			return err
-		}
+		srv := server.NewServer(addr, echo)
+		srv.Run()
 		return nil
 	}
 
