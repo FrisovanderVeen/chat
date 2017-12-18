@@ -30,11 +30,16 @@ var globalFlags = []cli.Flag{
 	},
 	cli.StringFlag{
 		Name:  "path",
-		Value: "/echo",
+		Value: "/chat",
 		Usage: "The path to the server",
+	},
+	cli.BoolFlag{
+		Name:  "recOnly, ro",
+		Usage: "Send and recieve if false or recieve only when true",
 	},
 }
 
+//Cmd is a command-line application
 type Cmd struct {
 	*cli.App
 }
@@ -55,8 +60,9 @@ func New() *Cmd {
 	app.Action = func(c *cli.Context) error {
 		addr := c.String("address")
 		path := c.String("path")
+		ro := c.Bool("recOnly")
 
-		client.Run(addr, path)
+		client.Run(addr, path, !ro)
 		return nil
 	}
 
