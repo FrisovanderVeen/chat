@@ -10,11 +10,13 @@ type Server struct {
 	//all the clients
 	clients map[*Client]bool
 
+	//the message pool
 	messages chan Message
 
 	register   chan *Client
 	unregister chan *Client
 
+	//the user decided values
 	addr string
 	echo bool
 }

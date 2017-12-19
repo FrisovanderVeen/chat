@@ -64,6 +64,9 @@ func (c *Client) Run() {
 				mess := <-c.rec
 				if mess.typ == websocket.TextMessage {
 					c.srv.messages <- mess
+				} else if mess.typ == websocket.CloseMessage {
+					c.send <- mess
+					c.srv.unregister <- c
 				} else {
 					c.send <- mess
 				}
