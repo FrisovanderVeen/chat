@@ -26,16 +26,21 @@ func ServeClient(s *Server, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c := &Client{
-		conn: conn,
-		send: make(chan Message),
-		rec:  make(chan Message),
-		srv:  s,
-	}
+	c := NewClient(conn, s)
 	c.srv.register <- c
 	log.Println("Client connected")
 
 	c.Run()
+}
+
+//NewClient creates a new client
+func NewClient(conn *websocket.Conn, srv *Server) *Client {
+	return &Client{
+		conn: conn,
+		send: make(chan Message),
+		rec:  make(chan Message),
+		srv:  srv,
+	}
 }
 
 //Run runs the client connection
